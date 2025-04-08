@@ -1,18 +1,46 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <immintrin.h>  // AVX intrinsics
 
 #include "matrix_lib.h"
 
+// int scalar_matrix_mult(float scalar_value, matrix *m, matrix *r)
+// {
+//     // mais rapido
+//     float *pm = m->values;
+//     float *pr = r->values;
+
+//     for (int i = 0; i < m->rows * m->cols; i++)
+//     {
+//         *(pr++) = *(pm++) * scalar_value;
+//     }
+//     return 0;
+// }
+
+// Versao com Intel Intrinsics 
 int scalar_matrix_mult(float scalar_value, matrix *m, matrix *r)
 {
-    // mais rapido
+    if (!m || !r || !m->values || !r->values) return -1;  // Verificação básica
+
+    int total = m->rows * m->cols;
     float *pm = m->values;
     float *pr = r->values;
 
-    for (int i = 0; i < m->rows * m->cols; i++)
-    {
-        *(pr++) = *(pm++) * scalar_value;
+    int i = 0;
+
+    // Bloco vetorial - processa 8 floats por vez
+    __m256 scalar_vec = _mm256_set1_ps(scalar_value);
+    for (; i <= total - 8; i += 8) {
+        __m256 m_vec = _mm256_loadu_ps(&pm[i]);       // carrega 8 floats da matriz original
+        __m256 res_vec = _mm256_mul_ps(m_vec, scalar_vec); // multiplicação vetorial
+        _mm256_storeu_ps(&pr[i], res_vec);            // armazena no resultado
     }
+
+    // Resto - processa os elementos restantes (se houver)
+    for (; i < total; i++) {
+        pr[i] = pm[i] * scalar_value;
+    }
+
     return 0;
 }
 
@@ -66,8 +94,16 @@ int matrix_matrix_mult(matrix *m1, matrix *m2, matrix *r)
     return 0;
 }
 
-// ./gera-matrix matrix-test 8 8
-// ./gera-matrix matrix-test2 8 8
-// ./gera-matrix matrix-result 8 8
-// ./gera-matrix matrix-result2 8 8
-// ./mlt -s 10 -r 8 -c 8 -C 8 -m matrix-test -M matrix-test2 -o matrix-result -O matri-result2
+// compilacao
+// gcc -Wall -o gera-matrix gera_matrix.c
+// gcc -Wall -o mlt matrix_lib.c matrix_lib_test.c
+//Com instrucao vetorial:
+// gcc -Wall -mavx -o mlt matrix_lib.c matrix_lib_test.c 
+
+
+// execucao
+// ./gera-matrix matrix-test 800 800
+// ./gera-matrix matrix-test2 800 800
+// ./gera-matrix matrix-result 800 800
+// ./gera-matrix matrix-result2 800 800
+// ./mlt -s 10 -r 800 -c 800 -C 800 -m matrix-test -M matrix-test2 -o matrix-result -O matrix-result2
