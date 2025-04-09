@@ -68,25 +68,69 @@ int scalar_matrix_mult(float scalar_value, matrix *m, matrix *r) {
 }
 */
 
+// int matrix_matrix_mult(matrix *m1, matrix *m2, matrix *r)
+// {
+//     int rows = m1->rows;
+//     int cols = m2->cols;
+//     int common = m1->cols;
+
+//     // Inicializa a matriz resultado
+//     for (int i = 0; i < rows * cols; i++)
+//         r->values[i] = 0;
+
+//     // Multiplicação
+//     for (int i = 0; i < rows; i++)
+//     {
+//         for (int k = 0; k < common; k++)
+//         {
+//             float m1_val = m1->values[i * common + k];
+//             for (int j = 0; j < cols; j++)
+//             {
+//                 r->values[i * cols + j] += m1_val * m2->values[k * cols + j];
+//             }
+//         }
+//     }
+
+//     return 0;
+// }
+
+// Implementacao do matrix_matrix_mult com Intel Intrinsics
 int matrix_matrix_mult(matrix *m1, matrix *m2, matrix *r)
 {
+    if (!m1 || !m2 || !r || !m1->values || !m2->values || !r->values)
+        return -1;
+
     int rows = m1->rows;
     int cols = m2->cols;
     int common = m1->cols;
 
-    // Inicializa a matriz resultado
+    // Inicializa matriz resultado
     for (int i = 0; i < rows * cols; i++)
-        r->values[i] = 0;
+        r->values[i] = 0.0f;
 
-    // Multiplicação
-    for (int i = 0; i < rows; i++)
-    {
-        for (int k = 0; k < common; k++)
-        {
-            float m1_val = m1->values[i * common + k];
-            for (int j = 0; j < cols; j++)
-            {
-                r->values[i * cols + j] += m1_val * m2->values[k * cols + j];
+    int j;
+    for (int i = 0; i < rows; i++) {
+        for (int k = 0; k < common; k++) {
+            float a_val = m1->values[i * common + k];
+            __m256 a_vec = _mm256_set1_ps(a_val);  // valor de A repetido 8x
+
+            for (j = 0; j <= cols - 8; j += 8) {
+                // carrega 8 valores de B[k][j...j+7]
+                __m256 b_vec = _mm256_loadu_ps(&m2->values[k * cols + j]);
+
+                // carrega 8 valores atuais de C[i][j...j+7]
+                __m256 c_vec = _mm256_loadu_ps(&r->values[i * cols + j]);
+
+                // faz: c_vec += a_vec * b_vec
+                c_vec = _mm256_fmadd_ps(a_vec, b_vec, c_vec);  // FMA = multiply-add
+
+                // salva o resultado em C
+                _mm256_storeu_ps(&r->values[i * cols + j], c_vec);
+            }
+
+            // Resto (caso cols não seja múltiplo de 8)
+            for (; j < cols; j++) {
+                r->values[i * cols + j] += a_val * m2->values[k * cols + j];
             }
         }
     }
@@ -94,11 +138,12 @@ int matrix_matrix_mult(matrix *m1, matrix *m2, matrix *r)
     return 0;
 }
 
+
 // compilacao
 // gcc -Wall -o gera-matrix gera_matrix.c
 // gcc -Wall -o mlt matrix_lib.c matrix_lib_test.c
 //Com instrucao vetorial:
-// gcc -Wall -mavx -o mlt matrix_lib.c matrix_lib_test.c 
+// gcc -Wall -mavx -mfma -o mlt matrix_lib.c matrix_lib_test.c 
 
 
 // execucao
