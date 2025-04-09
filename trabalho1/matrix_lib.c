@@ -147,8 +147,8 @@ int matrix_matrix_mult(matrix *m1, matrix *m2, matrix *r)
 
 
 // execucao
-// ./gera-matrix matrix-test 800 800
-// ./gera-matrix matrix-test2 800 800
-// ./gera-matrix matrix-result 800 800
-// ./gera-matrix matrix-result2 800 800
-// ./mlt -s 10 -r 800 -c 800 -C 800 -m matrix-test -M matrix-test2 -o matrix-result -O matrix-result2
+// ./gera-matrix matrix-test 16000 16000
+// ./gera-matrix matrix-test2 16000 16000
+// ./gera-matrix matrix-result 16000 16000
+// ./gera-matrix matrix-result2 16000 16000
+// ./mlt -s 10 -r 16000 -c 16000 -C 16000 -m matrix-test -M matrix-test2 -o matrix-result -O matrix-result2
