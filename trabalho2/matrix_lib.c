@@ -246,10 +246,20 @@
  * Com instruções vetoriais:
  * gcc -Wall -mavx -mfma -o mlt matrix_lib.c matrix_lib_test.c
  * 
+ * Compilação CUDA:
+ * nvcc -o mlt matrix_lib.cu matrix_lib_test.cu
  * Execução:
- * ./gera-matrix matrix-test 1280 1280
- * ./gera-matrix matrix-test2 1280 1280
- * ./gera-matrix matrix-result 1280 1280
- * ./gera-matrix matrix-result2 1280 1280
+ * ./gera-matrix floats1.dat 8 16
+ * ./gera-matrix floats2.dat 16 24
+ * ./gera-matrix result1.dat 8 16
+ * ./gera-matrix result2.dat 16 24
  * ./mlt -s 100 -r 1280 -c 1280 -C 1280 -m matrix-test -M matrix-test2 -o matrix-result -O matrix-result2
+ * 
+ * Execução CUDA:  
+ * ./mlt -s 5.0 -r 3200 -c 4800 -C 5600 -m floats1.dat -M floats2.dat -o result1.dat -O result2.dat -t 256 -g 4096
  */
+
+// ./gera-matrix floats1.dat 3200 4800
+// ./gera-matrix floats2.dat 4800 5600
+// ./gera-matrix result1.dat 3200 4800
+// ./gera-matrix result2.dat 4800 5600
