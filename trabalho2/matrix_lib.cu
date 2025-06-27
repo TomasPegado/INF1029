@@ -1,3 +1,16 @@
+/**
+ * @file matrix_lib.cu
+ * @brief Implementação de operações matriciais utilizando CUDA.
+ *
+ * Este arquivo contém kernels CUDA e funções host para multiplicação escalar e multiplicação de matrizes,
+ * utilizando aceleração por GPU. As funções são utilizadas para operações de álgebra linear em matrizes
+ * representadas pela struct 'matrix'.
+ *
+ * @author Bruno Wolf
+ * @author Tomás Lenzi
+ * @date 2024
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <cuda_runtime.h>
@@ -7,7 +20,16 @@
 // KERNELS CUDA (placeholders)
 // =============================
 
-// Kernel para multiplicação escalar
+/**
+ * @brief Kernel CUDA para multiplicação escalar de matriz.
+ *
+ * Multiplica cada elemento do vetor de entrada por um escalar e armazena o resultado no vetor de saída.
+ *
+ * @param scalar Escalar a ser multiplicado.
+ * @param input Vetor de entrada (matriz linearizada).
+ * @param output Vetor de saída (matriz linearizada).
+ * @param total_elements Número total de elementos na matriz.
+ */
 __global__ void scalar_matrix_mult_kernel(float scalar, float *input, float *output, int total_elements) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < total_elements) {
@@ -15,7 +37,18 @@ __global__ void scalar_matrix_mult_kernel(float scalar, float *input, float *out
     }
 }
 
-// Kernel para multiplicação de matrizes
+/**
+ * @brief Kernel CUDA para multiplicação de matrizes.
+ *
+ * Calcula o produto de duas matrizes A e B e armazena o resultado em C.
+ *
+ * @param A Matriz A (entrada), de dimensão rowsA x colsA.
+ * @param B Matriz B (entrada), de dimensão colsA x colsB.
+ * @param C Matriz resultado (saída), de dimensão rowsA x colsB.
+ * @param rowsA Número de linhas da matriz A.
+ * @param colsA Número de colunas da matriz A (e linhas da matriz B).
+ * @param colsB Número de colunas da matriz B.
+ */
 __global__ void matrix_matrix_mult_kernel(const float *A, const float *B, float *C, int rowsA, int colsA, int colsB) {
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
@@ -32,6 +65,14 @@ __global__ void matrix_matrix_mult_kernel(const float *A, const float *B, float 
 // FUNÇÕES HOST (implementação das funções do header)
 // =============================
 
+/**
+ * @brief Multiplica uma matriz por um escalar utilizando CUDA.
+ *
+ * @param scalar_value Valor escalar para multiplicação.
+ * @param m Ponteiro para a matriz de entrada.
+ * @param r Ponteiro para a matriz de resultado (deve ter as mesmas dimensões de m).
+ * @return 0 em caso de sucesso, -1 para erro de parâmetros, -2 para erro de alocação/cópia CUDA.
+ */
 int scalar_matrix_mult(float scalar_value, matrix *m, matrix *r) {
     if (!m || !r || !m->values || !r->values) return -1;
     unsigned long int total = m->rows * m->cols;
@@ -65,6 +106,14 @@ int scalar_matrix_mult(float scalar_value, matrix *m, matrix *r) {
     return 0;
 }
 
+/**
+ * @brief Multiplica duas matrizes utilizando CUDA.
+ *
+ * @param m1 Ponteiro para a matriz A (entrada).
+ * @param m2 Ponteiro para a matriz B (entrada).
+ * @param r Ponteiro para a matriz resultado (deve ter dimensões compatíveis).
+ * @return 0 em caso de sucesso, -1 para erro de parâmetros, -2 para erro de alocação/cópia CUDA.
+ */
 int matrix_matrix_mult(matrix *m1, matrix *m2, matrix *r) {
     if (!m1 || !m2 || !r || !m1->values || !m2->values || !r->values) return -1;
     if (m1->cols != m2->rows) return -1;
@@ -107,4 +156,15 @@ int matrix_matrix_mult(matrix *m1, matrix *m2, matrix *r) {
     return 0;
 }
 
-// Outras funções do header podem ser implementadas aqui, se necessário. 
+//  Compilação CUDA:
+// gcc -Wall -o gera-matrix gera_matrix.c
+// nvcc -o mlt_gpu matrix_lib.cu matrix_lib_test.cu
+
+// Execução:
+// ./gera-matrix floats1.dat 5600 6400
+// ./gera-matrix floats2.dat 6400 7200
+// ./gera-matrix result1.dat 5600 6400
+// ./gera-matrix result2.dat 6400 7200
+
+// Execução CUDA:  
+//  ./mlt_gpu -s 10000.0 -r 2400 -c 3200 -C 4000 -m floats1.dat -M floats2.dat -o result1.dat -O result2.dat -t 256 -g 4096

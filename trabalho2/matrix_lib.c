@@ -103,14 +103,14 @@
  * @param r Ponteiro para a matriz de resultado.
  * @return 0 em caso de sucesso.
  */
-// int scalar_matrix_mult(float scalar_value, matrix *m, matrix *r) {
-//     for (int j = 0; j < m->cols; j++) {
-//         for (int i = 0; i < m->rows; i++) {
-//             r->values[i * r->cols + j] = m->values[i * m->cols + j] * scalar_value;
-//         }
-//     }
-//     return 0;
-// }
+int scalar_matrix_mult(float scalar_value, matrix *m, matrix *r) {
+    for (int j = 0; j < m->cols; j++) {
+        for (int i = 0; i < m->rows; i++) {
+            r->values[i * r->cols + j] = m->values[i * m->cols + j] * scalar_value;
+        }
+    }
+    return 0;
+}
 
 /**
  * @brief Multiplica duas matrizes usando algoritmo otimizado para localidade de cache.
@@ -161,22 +161,22 @@
  * @param r Ponteiro para a matriz de resultado.
  * @return 0 em caso de sucesso.
  */
-// int matrix_matrix_mult(matrix *m1, matrix *m2, matrix *r)
-// {
-//     int rows = m1->rows;
-//     int cols = m2->cols;
-//     int common = m1->cols;
+int matrix_matrix_mult(matrix *m1, matrix *m2, matrix *r)
+{
+    int rows = m1->rows;
+    int cols = m2->cols;
+    int common = m1->cols;
 
-//     for (int i = 0; i < rows; i++) {
-//         for (int j = 0; j < cols; j++) {
-//             r->values[i * cols + j] = 0.0f; 
-//             for (int k = 0; k < common; k++) {
-//                 r->values[i * cols + j] += m1->values[i * common + k] * m2->values[k * cols + j];
-//             }
-//         }
-//     }
-//     return 0;
-// }
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            r->values[i * cols + j] = 0.0f; 
+            for (int k = 0; k < common; k++) {
+                r->values[i * cols + j] += m1->values[i * common + k] * m2->values[k * cols + j];
+            }
+        }
+    }
+    return 0;
+}
 
 /**
  * @brief Multiplica duas matrizes usando Intel Intrinsics (AVX/FMA).
@@ -246,20 +246,18 @@
  * Com instruções vetoriais:
  * gcc -Wall -mavx -mfma -o mlt matrix_lib.c matrix_lib_test.c
  * 
- * Compilação CUDA:
- * nvcc -o mlt matrix_lib.cu matrix_lib_test.cu
+ 
  * Execução:
- * ./gera-matrix floats1.dat 8 16
- * ./gera-matrix floats2.dat 16 24
- * ./gera-matrix result1.dat 8 16
- * ./gera-matrix result2.dat 16 24
- * ./mlt -s 100 -r 1280 -c 1280 -C 1280 -m matrix-test -M matrix-test2 -o matrix-result -O matrix-result2
+ * ./gera-matrix floats1.dat 800 1600
+ * ./gera-matrix floats2.dat 1600 2400
+ * ./gera-matrix result1.dat 800 1600
+ * ./gera-matrix result2.dat 1600 2400
  * 
- * Execução CUDA:  
- * ./mlt -s 5.0 -r 3200 -c 4800 -C 5600 -m floats1.dat -M floats2.dat -o result1.dat -O result2.dat -t 256 -g 4096
+ * ./mlt -s 10000.0 -r 1600 -c 2400 -C 3200 -m floats1.dat -M floats2.dat -o result1.dat -O result2.dat
  */
+//  ./gera-matrix floats1.dat 1600 2400
+//  ./gera-matrix floats2.dat 2400 3200
+//  ./gera-matrix result1.dat 1600 2400
+//  ./gera-matrix result2.dat 2400 3200
 
-// ./gera-matrix floats1.dat 3200 4800
-// ./gera-matrix floats2.dat 4800 5600
-// ./gera-matrix result1.dat 3200 4800
-// ./gera-matrix result2.dat 4800 5600
+//  ./mlt_gpu -s 10000.0 -r 1600 -c 2400 -C 3200 -m floats1.dat -M floats2.dat -o result1.dat -O result2.dat -t 256 -g 4096
